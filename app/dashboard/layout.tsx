@@ -17,7 +17,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   useEffect(() => {
     if (!hydrated) return;
-    if (!user) {
+    if (!user?.admin) {
       router.replace("/account");
       return;
     }
@@ -46,7 +46,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     <div className="flex min-h-svh flex-col gap-3 p-2.5 md:flex-row">
       <StoreHydrator />
       <Sidebar />
-      <main className="min-w-0 flex-1 px-1 pb-6 pt-3 md:px-1.5">{ready && user ? children : null}</main>
+      <main className="min-w-0 flex-1 px-1 pb-6 pt-3 md:px-1.5">{ready && user?.admin ? children : null}</main>
       <LiveToast />
     </div>
   );

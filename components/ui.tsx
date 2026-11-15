@@ -11,13 +11,13 @@ export const EASE = [0.22, 1, 0.36, 1] as const;
 
 export function Logo({ href = "/", small = false }: { href?: string; small?: boolean }) {
   return (
-    <Link href={href} className="group flex items-center gap-2" aria-label={`${site.name} home`}>
+    <Link href={href} className="group flex min-w-0 items-center gap-2" aria-label={`${site.name} home`}>
       <span
-        className={`grid place-items-center rounded-full bg-ink text-card transition-transform duration-500 ease-out-soft group-hover:rotate-[20deg] ${small ? "size-[22px]" : "size-6"}`}
+        className={`grid shrink-0 place-items-center rounded-full bg-ink text-card transition-transform duration-500 ease-out-soft group-hover:rotate-[20deg] ${small ? "size-[22px]" : "size-6"}`}
       >
         <Sprout size={small ? 11 : 12} strokeWidth={2.4} />
       </span>
-      <span className={`font-sans font-bold tracking-[-0.02em] ${small ? "text-[15px]" : "text-[17px]"}`}>{site.name}</span>
+      <span className={`truncate font-sans font-bold tracking-[-0.02em] ${small ? "text-[13.5px]" : "text-[14px] sm:text-[16px]"}`}>{site.name}</span>
     </Link>
   );
 }

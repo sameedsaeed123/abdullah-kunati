@@ -7,7 +7,8 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { EASE, MaskText, Stepper } from "@/components/ui";
 import { money } from "@/lib/format";
-import { navCategories, toneBg, type Category, type Product } from "@/lib/products";
+import { useCatalog } from "@/components/catalog";
+import { toneBg, type Product } from "@/lib/products";
 import { addToBag } from "@/lib/store";
 
 /** The product cut-out floating over its soft ground shadow. Fills the nearest positioned parent. */
@@ -40,7 +41,8 @@ export function ProductObject({
         height={p.h}
         sizes={sizes}
         priority={priority}
-        className={`relative -translate-y-[3%] object-contain transition-transform duration-500 ease-out-soft ${hover ? "group-hover:-translate-y-[6%] group-hover:scale-[1.03]" : ""}`}
+        unoptimized={p.image.startsWith("/api/")}
+        className={`relative -translate-y-[3%] object-contain ${p.blend ? "mix-blend-multiply" : ""} transition-transform duration-500 ease-out-soft ${hover ? "group-hover:-translate-y-[6%] group-hover:scale-[1.03]" : ""}`}
         style={{ height: `${fit * 100}%`, width: "auto", maxWidth: `min(${fit * 100}%, ${Math.round(p.w * 1.25)}px)` }}
       />
     </div>
@@ -103,32 +105,23 @@ export function ProductCard({ p, priority }: { p: Product; priority?: boolean })
   );
 }
 
-type Filter = "All" | Category;
-
-export function FilterPills({ value, onChange, id }: { value: Filter; onChange: (f: Filter) => void; id: string }) {
-  const options: Filter[] = ["All", ...navCategories];
+export function FilterPills({ value, onChange, id, options }: { value: string; onChange: (f: string) => void; id: string; options: { slug: string; name: string }[] }) {
   return (
     <LayoutGroup id={id}>
-      <div role="tablist" aria-label="Filter by category" className="inline-flex rounded-full bg-card p-1 shadow-card">
+      <div role="tablist" aria-label="Filter" className="inline-flex max-w-full overflow-x-auto rounded-full bg-card p-1 shadow-card [scrollbar-width:none]">
         {options.map((o) => {
-          const active = o === value;
+          const active = o.slug === value;
           return (
             <button
-              key={o}
+              key={o.slug}
               role="tab"
               aria-selected={active}
               type="button"
-              onClick={() => onChange(o)}
-              className={`relative h-8 rounded-full px-3.5 text-[13px] transition-colors duration-300 ${active ? "text-card" : "text-ink/80 hover:text-ink"}`}
+              onClick={() => onChange(o.slug)}
+              className={`relative h-8 shrink-0 whitespace-nowrap rounded-full px-3.5 text-[13px] transition-colors duration-300 ${active ? "text-card" : "text-ink/80 hover:text-ink"}`}
             >
-              {active && (
-                <motion.span
-                  layoutId="pill"
-                  className="absolute inset-0 rounded-full bg-ink"
-                  transition={{ type: "spring", stiffness: 420, damping: 34 }}
-                />
-              )}
-              <span className="relative">{o}</span>
+              {active && <motion.span layoutId="pill" className="absolute inset-0 rounded-full bg-ink" transition={{ type: "spring", stiffness: 420, damping: 34 }} />}
+              <span className="relative">{o.name}</span>
             </button>
           );
         })}
@@ -141,18 +134,28 @@ export function FilterableGrid({
   items,
   eyebrow,
   title,
-  initial = "All",
+  initial = "all",
+  initialSub = "",
   headingAs = "h2",
 }: {
   items: Product[];
   eyebrow: string;
   title: string;
-  initial?: Filter;
+  initial?: string;
+  initialSub?: string;
   headingAs?: "h1" | "h2";
 }) {
-  const [filter, setFilter] = useState<Filter>(initial);
-  useEffect(() => setFilter(initial), [initial]);
-  const shown = filter === "All" ? items : items.filter((p) => p.category === filter);
+  const { categories } = useCatalog();
+  const [filter, setFilter] = useState(initial);
+  const [sub, setSub] = useState(initialSub);
+  useEffect(() => {
+    setFilter(initial);
+    setSub(initialSub);
+  }, [initial, initialSub]);
+
+  const options = [{ slug: "all", name: "All" }, ...categories.filter((c) => items.some((p) => p.categorySlug === c.slug)).map((c) => ({ slug: c.slug, name: c.name }))];
+  const subs = categories.find((c) => c.slug === filter)?.children ?? [];
+  const shown = items.filter((p) => (filter === "all" || p.categorySlug === filter) && (!sub || p.subcategory === sub));
 
   return (
     <section>
@@ -161,8 +164,42 @@ export function FilterableGrid({
           <p className="eyebrow">{eyebrow}</p>
           <MaskText as={headingAs} onView lines={[title]} className="display mt-2 text-[clamp(32px,4.1vw,54px)]" />
         </div>
-        <FilterPills id={`filter-${title}`} value={filter} onChange={setFilter} />
+        <FilterPills
+          id={`filter-${title}`}
+          value={filter}
+          options={options}
+          onChange={(f) => {
+            setFilter(f);
+            setSub("");
+          }}
+        />
       </div>
+      <AnimatePresence initial={false}>
+        {subs.length > 0 && (
+          <motion.div
+            key={filter}
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.3, ease: EASE }}
+            className="overflow-hidden"
+          >
+            <div className="flex flex-wrap gap-2 pt-4">
+              {[{ slug: "", name: "Everything" }, ...subs].map((x) => (
+                <button
+                  key={x.slug}
+                  type="button"
+                  aria-pressed={sub === x.slug}
+                  onClick={() => setSub(x.slug)}
+                  className={`h-8 rounded-full px-3.5 text-[12.5px] transition-colors ${sub === x.slug ? "bg-ink text-card" : "bg-field text-ink/80 hover:bg-line"}`}
+                >
+                  {x.name}
+                </button>
+              ))}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
       <motion.div layout className="mt-7 grid grid-cols-2 gap-x-3.5 gap-y-8 lg:grid-cols-4">
         <AnimatePresence mode="popLayout" initial={false}>
           {shown.map((p, i) => (
@@ -179,7 +216,7 @@ export function FilterableGrid({
           ))}
         </AnimatePresence>
       </motion.div>
-      {shown.length === 0 && <p className="py-20 text-center text-[14px] text-muted">Nothing in {filter} right now — new pieces land every month.</p>}
+      {shown.length === 0 && <p className="py-20 text-center text-[14px] text-muted">Nothing here right now — new pieces land every month.</p>}
     </section>
   );
 }
@@ -190,7 +227,7 @@ const tabs = ["Details", "Dimensions", "Care"] as const;
 
 export function ProductView({ p }: { p: Product }) {
   const imgRef = useRef<HTMLImageElement>(null);
-  const [finish, setFinish] = useState(p.finishes[0]!.name);
+  const [finish, setFinish] = useState(p.finishes[0]?.name ?? "");
   const [qty, setQty] = useState(1);
   const [tab, setTab] = useState<(typeof tabs)[number]>("Details");
   const [view, setView] = useState<"Product" | "In the room">("Product");
@@ -200,7 +237,7 @@ export function ProductView({ p }: { p: Product }) {
 
   const add = () => {
     if (added) return;
-    addToBag({ slug: p.slug, finish, qty, el: imgRef.current });
+    addToBag({ slug: p.slug, finish: finish || undefined, qty, el: imgRef.current });
     setAdded(true);
     timer.current = setTimeout(() => setAdded(false), 2400);
   };
@@ -274,7 +311,7 @@ export function ProductView({ p }: { p: Product }) {
           </div>
           <p className="mt-4 max-w-[440px] text-[14px] leading-[1.55] text-ink/75">{p.blurb}</p>
 
-          <div className="mt-6">
+          <div className={p.finishes.length ? "mt-6" : "hidden"}>
             <p className="text-[12.5px]">
               <span className="font-medium">Finish</span> <span className="text-muted">· {finish}</span>
             </p>

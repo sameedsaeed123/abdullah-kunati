@@ -1,8 +1,13 @@
+import { CatalogProvider } from "@/components/catalog";
 import { CartDrawer, FlyLayer, Footer, Header, StoreHydrator, Toast } from "@/components/store/chrome";
+import { loadCatalog } from "@/lib/catalog";
 
-export default function StoreLayout({ children }: { children: React.ReactNode }) {
+export const dynamic = "force-dynamic";
+
+export default async function StoreLayout({ children }: { children: React.ReactNode }) {
+  const catalog = await loadCatalog();
   return (
-    <>
+    <CatalogProvider catalog={catalog}>
       <StoreHydrator />
       <a href="#main" className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[70] focus:rounded-full focus:bg-ink focus:px-4 focus:py-2 focus:text-card">
         Skip to content
@@ -15,6 +20,6 @@ export default function StoreLayout({ children }: { children: React.ReactNode })
       <CartDrawer />
       <FlyLayer />
       <Toast />
-    </>
+    </CatalogProvider>
   );
 }

@@ -3,21 +3,19 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ProductView } from "@/components/store/product";
-import { bySlug, products } from "@/lib/products";
+import { loadCatalog } from "@/lib/catalog";
 
 type Props = { params: Promise<{ slug: string }> };
 
-export function generateStaticParams() {
-  return products.map((p) => ({ slug: p.slug }));
-}
+const find = async (slug: string) => (await loadCatalog()).products.find((p) => p.slug === slug);
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const p = bySlug((await params).slug);
+  const p = await find((await params).slug);
   return p ? { title: p.name, description: p.blurb } : {};
 }
 
 export default async function ProductPage({ params }: Props) {
-  const p = bySlug((await params).slug);
+  const p = await find((await params).slug);
   if (!p) notFound();
   return (
     <>
@@ -26,7 +24,7 @@ export default async function ProductPage({ params }: Props) {
           Shop
         </Link>
         <ChevronRight size={12} />
-        <Link href={`/shop?c=${p.category.toLowerCase()}`} className="hover:text-ink">
+        <Link href={`/shop?c=${p.categorySlug}`} className="hover:text-ink">
           {p.category}
         </Link>
         <ChevronRight size={12} />

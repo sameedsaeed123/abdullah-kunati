@@ -1,6 +1,5 @@
 import { isAdmin } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { bySlug } from "@/lib/products";
 import { site } from "@/lib/site";
 
 type Body = { id?: string; customer?: string; city?: string; street?: string; delivery?: string; payment?: string; lines?: { slug: string; finish?: string; qty: number }[] };
@@ -8,10 +7,14 @@ type Body = { id?: string; customer?: string; city?: string; street?: string; de
 /** Place an order. Prices are recomputed on the server; the client total is never trusted. */
 export async function POST(req: Request) {
   const b = (await req.json().catch(() => ({}))) as Body;
-  const lines = (b.lines ?? []).filter((l) => bySlug(l.slug) && Number.isInteger(l.qty) && l.qty > 0 && l.qty < 100);
-  if (!b.id || !/^[A-Z]{2}-\d{6}$/.test(b.id) || !b.customer?.trim() || !b.city?.trim() || !b.street?.trim() || lines.length === 0)
+  const wanted = (b.lines ?? []).filter((l) => typeof l.slug === "string" && Number.isInteger(l.qty) && l.qty > 0 && l.qty < 100);
+  if (!b.id || !/^[A-Z]{2}-\d{6}$/.test(b.id) || !b.customer?.trim() || !b.city?.trim() || !b.street?.trim() || wanted.length === 0)
     return Response.json({ error: "Invalid order" }, { status: 400 });
-  const subtotal = lines.reduce((t, l) => t + bySlug(l.slug)!.price * l.qty, 0);
+  const priced = await db()`select slug, price from products where slug = any(${wanted.map((l) => l.slug)})`;
+  const price = new Map(priced.map((r) => [r.slug as string, Number(r.price)]));
+  const lines = wanted.filter((l) => price.has(l.slug));
+  if (lines.length === 0) return Response.json({ error: "Invalid order" }, { status: 400 });
+  const subtotal = lines.reduce((t, l) => t + price.get(l.slug)! * l.qty, 0);
   const items = lines.reduce((t, l) => t + l.qty, 0);
   const delivery = b.delivery === "express" ? "express" : "standard";
   const total = subtotal + (subtotal >= site.freeDeliveryOver ? 0 : site.standardShipping) + (delivery === "express" ? site.expressSurcharge : 0);

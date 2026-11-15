@@ -145,7 +145,7 @@ export default function CheckoutPage() {
                 className="flex items-center gap-3"
               >
                 <div className={`relative grid size-[50px] shrink-0 place-items-center rounded-xl ${toneBg[p.tone]}`}>
-                  <Image src={p.image} alt="" width={p.w} height={p.h} sizes="50px" className="max-h-[70%] w-auto max-w-[70%] object-contain" />
+                  <Image src={p.image} alt="" width={p.w} height={p.h} sizes="50px" unoptimized={p.image.startsWith("/api/")} className={`max-h-[70%] w-auto max-w-[70%] object-contain ${p.blend ? "mix-blend-multiply" : ""}`} />
                   <span className="absolute -right-1.5 -top-1.5 grid size-[18px] place-items-center rounded-full bg-ink text-[10px] font-semibold text-card">{l.qty}</span>
                 </div>
                 <div className="min-w-0 flex-1">

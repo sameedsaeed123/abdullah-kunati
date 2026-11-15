@@ -7,21 +7,22 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { EASE, Logo, MaskText, Spinner } from "@/components/ui";
 import { ProductObject } from "@/components/store/product";
-import { bySlug, toneBg } from "@/lib/products";
+import { useCatalog } from "@/components/catalog";
+import { toneBg } from "@/lib/products";
 import { site } from "@/lib/site";
 import { useShop } from "@/lib/store";
 
-const mosaic = ["linne-table-lamp", "dyn-vase", "bolle-lounge-chair", "rand-wool-throw"];
 
 export default function AccountPage() {
   const router = useRouter();
+  const mosaic = useCatalog().products.slice(0, 4);
   const user = useShop((s) => s.user);
   const signIn = useShop((s) => s.signIn);
   const signOut = useShop((s) => s.signOut);
   const hasBag = useShop((s) => s.lines.length > 0);
 
   const [mode, setMode] = useState<"in" | "up">("in");
-  const [busy, setBusy] = useState<null | "form" | "demo">(null);
+  const [busy, setBusy] = useState<null | "form">(null);
   const [show, setShow] = useState(false);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -50,11 +51,6 @@ export default function AccountPage() {
       .catch(local);
   };
 
-  const demo = () => {
-    setBusy("demo");
-    setTimeout(() => finish({ name: "Demo Admin", email: `demo@${site.domain}`, admin: true }), 1000);
-  };
-
   return (
     <div className="grid gap-3.5 pt-3 lg:min-h-[calc(100svh-104px)] lg:grid-cols-[minmax(0,512px)_1fr]">
       <motion.section
@@ -69,10 +65,12 @@ export default function AccountPage() {
               <p className="eyebrow">Signed in</p>
               <MaskText as="h1" lines={[`Hi, ${user.name.split(" ")[0]}`]} className="display mt-3 text-[44px]" />
               <p className="mt-3 text-[13px] text-muted">{user.email}</p>
-              <Link href="/dashboard" className="btn-ink mt-7 h-[42px] w-full text-[13px]">
-                <LayoutGrid size={14} /> Open dashboard
-              </Link>
-              <button type="button" onClick={signOut} className="btn-ghost mt-2.5 h-[42px] w-full text-[13px]">
+              {user.admin && (
+                <Link href="/dashboard" className="btn-ink mt-7 h-[42px] w-full text-[13px]">
+                  <LayoutGrid size={14} /> Open dashboard
+                </Link>
+              )}
+              <button type="button" onClick={() => { void fetch("/api/login", { method: "DELETE" }).catch(() => {}); signOut(); }} className="btn-ghost mt-2.5 h-[42px] w-full text-[13px]">
                 <LogOut size={14} /> Sign out
               </button>
             </>
@@ -146,15 +144,8 @@ export default function AccountPage() {
                 </button>
               </form>
 
-              <div className="my-5 flex items-center gap-3 text-[11px] text-muted">
-                <span className="h-px flex-1 bg-line" /> or <span className="h-px flex-1 bg-line" />
-              </div>
-
-              <button type="button" onClick={demo} disabled={!!busy} className="btn-ghost h-[42px] w-full text-[13px] disabled:opacity-70">
-                {busy === "demo" ? <Spinner /> : <LayoutGrid size={14} />} Continue as demo admin
-              </button>
               <p className="mx-auto mt-3.5 max-w-[300px] text-center text-[11px] leading-relaxed text-muted">
-                Store admins sign in with their email and password. The demo button shows the dashboard with sample data.
+                Store admins sign in here with their email and password.
               </p>
             </>
           )}
@@ -162,11 +153,10 @@ export default function AccountPage() {
       </motion.section>
 
       <section aria-hidden className="relative hidden grid-cols-2 grid-rows-[0.8fr_1fr] gap-3.5 lg:grid">
-        {mosaic.map((slug, i) => {
-          const p = bySlug(slug)!;
+        {mosaic.map((p, i) => {
           return (
             <motion.div
-              key={slug}
+              key={p.slug}
               initial={{ opacity: 0, scale: 0.94, filter: "blur(10px)" }}
               animate={{ opacity: 1, scale: 1, filter: "blur(0px)" }}
               transition={{ duration: 0.8, ease: EASE, delay: 0.1 + i * 0.09 }}

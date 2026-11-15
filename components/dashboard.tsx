@@ -1,7 +1,7 @@
 "use client";
 
 import { AnimatePresence, LayoutGroup, motion } from "motion/react";
-import { LayoutGrid, LogOut, ReceiptText, Store } from "lucide-react";
+import { LayoutGrid, LogOut, MessageSquare, Package, PanelsTopLeft, ReceiptText, Store, Tags } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useId, useMemo, useRef, useState } from "react";
@@ -73,6 +73,10 @@ export function StatusPill({ status }: { status: OrderStatus }) {
 const nav = [
   { href: "/dashboard", label: "Overview", icon: LayoutGrid },
   { href: "/dashboard/orders", label: "Orders", icon: ReceiptText },
+  { href: "/dashboard/products", label: "Products", icon: Package },
+  { href: "/dashboard/categories", label: "Categories", icon: Tags },
+  { href: "/dashboard/site", label: "Site editor", icon: PanelsTopLeft },
+  { href: "/dashboard/messages", label: "Messages", icon: MessageSquare },
   { href: "/", label: "Storefront", icon: Store },
 ];
 
@@ -88,10 +92,10 @@ export function Sidebar() {
     <aside className="card sticky top-2.5 z-30 flex shrink-0 flex-col !rounded-[22px] p-3 md:h-[calc(100svh-20px)] md:w-[200px]">
       <div className="flex items-center justify-between px-2 pb-4 pt-2">
         <Logo small href="/dashboard" />
-        <span className="rounded-md bg-field px-1.5 py-1 font-mono text-[9px] tracking-[0.14em] text-muted">DEMO</span>
+        <span className="rounded-md bg-field px-1.5 py-1 font-mono text-[9px] tracking-[0.14em] text-muted">ADMIN</span>
       </div>
       <LayoutGroup id="side">
-        <nav aria-label="Dashboard" className="flex gap-1 md:flex-col">
+        <nav aria-label="Dashboard" className="flex gap-1 overflow-x-auto md:flex-col md:overflow-visible">
           {nav.map((n) => {
             const active = n.href === pathname;
             return (
@@ -99,7 +103,7 @@ export function Sidebar() {
                 key={n.href}
                 href={n.href}
                 aria-current={active ? "page" : undefined}
-                className={`relative flex h-[38px] flex-1 items-center gap-3 rounded-xl px-3 text-[13px] transition-colors md:flex-none ${active ? "font-medium text-card" : "text-ink/80 hover:bg-ink/5 hover:text-ink"}`}
+                className={`relative flex h-[38px] shrink-0 items-center gap-3 whitespace-nowrap rounded-xl px-3 text-[13px] transition-colors md:flex-none ${active ? "font-medium text-card" : "text-ink/80 hover:bg-ink/5 hover:text-ink"}`}
               >
                 {active && <motion.span layoutId="side-pill" className="absolute inset-0 rounded-xl bg-ink" transition={{ type: "spring", stiffness: 400, damping: 34 }} />}
                 <n.icon size={15} className="relative" />
@@ -164,6 +168,8 @@ export function Sidebar() {
 export function LiveToast() {
   const toast = useDash((s) => s.toast);
   const hide = useDash((s) => s.hideToast);
+  const pathname = usePathname();
+  const here = pathname === "/dashboard" || pathname === "/dashboard/orders";
   useEffect(() => {
     if (!toast) return;
     const t = setTimeout(hide, 5200);
@@ -172,7 +178,7 @@ export function LiveToast() {
   return (
     <div className="pointer-events-none fixed bottom-4 right-4 z-50" role="status" aria-live="polite">
       <AnimatePresence mode="wait">
-        {toast && (
+        {toast && here && (
           <motion.div
             key={toast.id}
             initial={{ opacity: 0, y: 24, scale: 0.94, filter: "blur(6px)" }}
