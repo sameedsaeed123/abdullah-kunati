@@ -1,0 +1,10 @@
+node_modules
+.next
+next-env.d.ts
+*.tsbuildinfo
+.DS_Store
+.env*
+!.env.example
+.clone-ui
+.claude
+ADMIN_CREDENTIALS.txt
