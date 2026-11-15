@@ -81,6 +81,13 @@ button:not(:disabled) {
   outline-offset: 2px;
 }
 
+/* Inputs show focus with their own single inner border, not the global outline. */
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible {
+  outline: none;
+}
+
 @layer components {
   .display {
     font-family: var(--font-display);
@@ -155,7 +162,7 @@ button:not(:disabled) {
   }
   .field:focus {
     background: var(--color-card);
-    box-shadow: inset 0 0 0 2px var(--color-ink);
+    box-shadow: inset 0 0 0 1.5px var(--color-ink);
   }
 }
 
