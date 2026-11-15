@@ -196,7 +196,7 @@ export function Hero({ content, edit }: { content?: HeroContent; edit?: Edit }) 
                 initial={{ y: -40, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
                 transition={{ duration: 1, ease: EASE, delay: 0.25 }}
-                className={`absolute right-[10%] origin-top transition-transform duration-700 ease-out-soft group-hover:rotate-[2.5deg] ${c.card1Image ? "bottom-3 top-3" : "top-0 h-[112%]"}`}
+                className={`absolute right-[10%] origin-top transition-transform duration-700 ease-out-soft group-hover:rotate-[2.5deg] ${c.card1Image ? "bottom-3 top-3" : "bottom-5 top-0"}`}
               >
                 <Image
                   src={side.src}
