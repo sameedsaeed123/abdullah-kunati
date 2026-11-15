@@ -111,7 +111,7 @@ export function Hero({ content, edit }: { content?: HeroContent; edit?: Edit }) 
   const shown = hero && c.featuredImage ? { ...hero, image: c.featuredImage.src, w: c.featuredImage.w, h: c.featuredImage.h, blend: c.featuredImage.blend } : hero;
 
   return (
-    <section className={`grid gap-3.5 lg:min-h-[600px] lg:grid-cols-[1.41fr_1fr] ${edit ? "lg:h-[640px]" : "lg:h-[calc(100svh-92px)]"}`}>
+    <section className={`grid gap-3.5 lg:grid-cols-[1.41fr_1fr] ${edit ? "lg:min-h-[640px]" : "lg:min-h-[max(600px,calc(100svh-92px))]"}`}>
       <div className="grid gap-3.5 lg:grid-rows-[1fr_200px]">
         {/* headline card */}
         <div className="card flex min-h-[400px] flex-col justify-between gap-10 p-6 sm:p-8">
